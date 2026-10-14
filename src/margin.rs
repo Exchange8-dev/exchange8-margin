@@ -322,7 +322,7 @@ mod tests {
         // requirement 500_000 > equity 100_000 → liquidation plan.
         let plan = evaluate_liquidation(1, 7, &breached, 10_000).unwrap();
         assert_eq!(plan.close_qty, 100);
-        assert!(plan.close_is_buy == false); // close long = sell
+        assert!(!plan.close_is_buy); // close long = sell
         assert_eq!(plan.shortfall, 400_000);
         // Well-funded account: no plan.
         let ok = MarginState {
