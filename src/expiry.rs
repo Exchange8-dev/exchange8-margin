@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Ex8:Margin binomial Greeks + futures expiry engine.
+//! Exchange8:Margin binomial Greeks + futures expiry engine.
 //!
 //! - **Binomial**: Cox-Ross-Rubinstein American option pricing +
 //!   Greeks — the exercise-early premium path the BSM closed form cannot

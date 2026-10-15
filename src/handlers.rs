@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Ex8:Margin data handlers — positions + margin accounts query API.
+//! Exchange8:Margin data handlers — positions + margin accounts query API.
 //!
 //! Every handler follows the platform authorization pipeline (§5): verify
 //! bearer → scope check → RLS context (same connection) → explicit

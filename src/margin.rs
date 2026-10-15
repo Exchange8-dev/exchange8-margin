@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Ex8:Margin core — position ledger, MTM, margin, funding, liquidation.
+//! Exchange8:Margin core — position ledger, MTM, margin, funding, liquidation.
 //!
 //! Event-sourced position accounting for derivatives (futures, perpetuals,
 //! options positions downstream). Pure functions: the shell feeds trade

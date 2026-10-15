@@ -1,7 +1,7 @@
-# BUSINESS.md: Ex8:Margin — Business Requirements & Functionality
+# BUSINESS.md: Exchange8:Margin — Business Requirements & Functionality
 
 > Audience: product owners, business analysts, and anyone evaluating what
-> Ex8:Margin **does for the business**. For architecture read `README.md`;
+> Exchange8:Margin **does for the business**. For architecture read `README.md`;
 > for wire-level detail read `DESIGN.md`.
 
 ## 1. Business Purpose
@@ -33,7 +33,7 @@
 | Mark-to-market | Periodic (Sentin8:Cron) and index-tick-driven revaluation of open positions with a durable last-mark trail |
 | Margin calculation | Initial and maintenance margin as configurable basis-point requirements; per-contract margin model declared (isolated / cross / span / portfolio) |
 | Margin calls | Margin-call events with requirement, shortfall, and the mark the decision ran against |
-| Liquidation | Close-plan engine: close quantity, close side, shortfall — closed through the market (Ex8:ME), with a durable pending → submitted → filled/failed lifecycle |
+| Liquidation | Close-plan engine: close quantity, close side, shortfall — closed through the market (Exchange8:ME), with a durable pending → submitted → filled/failed lifecycle |
 | Perpetual funding | Periodic funding between longs and shorts from the clamped premium index, with an applied-rate history for every posting |
 | Options Greeks | Closed-form (Black–Scholes–Merton) delta/gamma/vega/theta/rho for European options, cached per contract |
 | American pricing | Cox-Ross-Rubinstein tree pricing/Greeks capturing the early-exercise premium |
@@ -46,15 +46,15 @@
 
 | Concern | Owning service |
 |---|---|
-| Pre-trade authorization and opening-trade risk gating (including the options-layer checks that consume Greeks values) | Ex8:Risk |
-| Matching and the execution of the liquidation close order | Ex8:ME |
-| Trade persistence, clearing, busts/amendments, exercise/assignment workflow | Ex8:Clearing |
-| Index composition, publication, and staleness health | Ex8:VFeeds |
-| Contract reference data and corporate-action position adjustments (fed in as events) | Ex8:RefData |
-| External settlement rails for cash variation and physical delivery | Ex8:Settlement |
-| Fiat margin rails and custody movements (postings behind funding/deposits) | Bank8:Ledger / Ex8:Settlement custody |
-| Order entry, client protocols, session management | Ex8:Gateway / Ex8:OMS |
-| Market surveillance of the flows margin exposes | Ex8:Surveillance |
+| Pre-trade authorization and opening-trade risk gating (including the options-layer checks that consume Greeks values) | Exchange8:Risk |
+| Matching and the execution of the liquidation close order | Exchange8:ME |
+| Trade persistence, clearing, busts/amendments, exercise/assignment workflow | Exchange8:Clearing |
+| Index composition, publication, and staleness health | Exchange8:VFeeds |
+| Contract reference data and corporate-action position adjustments (fed in as events) | Exchange8:RefData |
+| External settlement rails for cash variation and physical delivery | Exchange8:Settlement |
+| Fiat margin rails and custody movements (postings behind funding/deposits) | Bank8:Ledger / Exchange8:Settlement custody |
+| Order entry, client protocols, session management | Exchange8:Gateway / Exchange8:OMS |
+| Market surveillance of the flows margin exposes | Exchange8:Surveillance |
 | Scheduling of margin/MTM/funding/expiry cycles | Sentin8:Cron |
 | Identity, tokens, authorization decision engine | Sentin8:Auth / Shield (declared sets) |
 | Event durability & fan-out infrastructure | Sentin8:Bus |
@@ -174,7 +174,7 @@ adjustments, Shield policy-set updates (hot reload).
 
 ## 6. Target-User Roles & Use Cases
 
-| Persona | Role | What they do with Ex8:Margin |
+| Persona | Role | What they do with Exchange8:Margin |
 |---|---|---|
 | Retail / institutional trader | Derivatives participant | Watches margin requirements and liquidation proximity on their positions; responds to margin calls (add collateral / reduce size) |
 | Perpetuals trader / market maker | Funding participant | Reads funding history and clamping behavior; manages carry between long and short funding payments |
@@ -218,17 +218,17 @@ adjustments, Shield policy-set updates (hot reload).
 
 ## 8. Dependencies & Reliance
 
-- **Ex8:ME / Ex8:Clearing** — the trade stream that drives position
+- **Exchange8:ME / Exchange8:Clearing** — the trade stream that drives position
   accounting; clearing facts reconcile the ledger, and the close orders from
   liquidation plans execute in the market.
-- **Ex8:VFeeds** — the index price for marks, the premium index behind
+- **Exchange8:VFeeds** — the index price for marks, the premium index behind
   funding, and the settlement-price formation input.
-- **Ex8:RefData** — contract master context (underlying, corporate actions:
+- **Exchange8:RefData** — contract master context (underlying, corporate actions:
   position adjustments arrive as events at ex-dates).
-- **Ex8:Risk** — the synchronous pre-trade gate; margin provides the
+- **Exchange8:Risk** — the synchronous pre-trade gate; margin provides the
   asynchronous, stateful counterpart (and the Greeks values its options-layer
   checks consume).
-- **Ex8:Settlement** — consumer of expiry outcomes (cash variation and
+- **Exchange8:Settlement** — consumer of expiry outcomes (cash variation and
   physical delivery) and external-rail postings.
 - **Sentin8:Cron** — schedules margin cycles, MTM runs, funding intervals,
   and expiry windows (no replica-local scheduler).

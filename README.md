@@ -1,8 +1,8 @@
-# README.md: Ex8:Margin
+# README.md: Exchange8:Margin
 
 ## 1. Summary
 
-Ex8:Margin is the asynchronous, stateful derivatives-risk engine of the
+Exchange8:Margin is the asynchronous, stateful derivatives-risk engine of the
 exchange8 vertical (the capital-markets tier of the Sentin8 platform). It owns
 the net-position ledger per (environment, account, contract) for futures,
 perpetuals, and options; revalues that ledger against mark/index prices
@@ -27,7 +27,7 @@ Sentin8:Bus and `margin.audit_journal` pushes to Sentin8:Sys.
 ## 2. Motivation
 
 - **Different latency profile, different failure model than pre-trade risk.**
-  Ex8:Risk is a stateless microsecond pure-function gate; margin, by contrast,
+  Exchange8:Risk is a stateless microsecond pure-function gate; margin, by contrast,
   must maintain positions over time, revalue them continuously, close
   breached positions, and never lose a funding or liquidation decision. Merging
   the two would force one latency budget on two incompatible workloads — the
@@ -59,13 +59,13 @@ relay, and the audit pusher.
 ```mermaid
 graph TD
     subgraph Producers["Event producers (Sentin8:Bus inbox-first)"]
-        ME["Ex8:ME (trade executions)"]
-        CLR["Ex8:Clearing (trades, settlement due)"]
-        VF["Ex8:VFeeds (index:updated)"]
-        REF["Ex8:RefData (position:adjusted corporate actions)"]
+        ME["Exchange8:ME (trade executions)"]
+        CLR["Exchange8:Clearing (trades, settlement due)"]
+        VF["Exchange8:VFeeds (index:updated)"]
+        REF["Exchange8:RefData (position:adjusted corporate actions)"]
     end
 
-    subgraph Margin["Ex8:Margin process (exchange8-margin)"]
+    subgraph Margin["Exchange8:Margin process (exchange8-margin)"]
         ENGINE["Pure risk core: position ledger · MTM · margin check · liquidation plan · funding"]
         GREEKS["Greeks engine: BSM closed form (European) · CRR binomial (American) · portfolio netting · limit checks"]
         EXPIRY["Expiry engine: observation window → settlement average → cash P&L / physical delivery"]
@@ -135,7 +135,7 @@ source modules); signatures are illustrative, not API dumps.
   breached non-flat account: close quantity `|qty|`, close side opposite the
   position (a long is closed by selling, a short by buying), the shortfall,
   and the mark the check ran against. The plan is the input to the market
-  close order destined for Ex8:ME.
+  close order destined for Exchange8:ME.
 - **Greeks engine (`GreeksInput`, `Greeks`)** — Black–Scholes–Merton closed
   form for European calls/puts: theoretical price plus delta, gamma, vega,
   theta, rho per unit of underlying. Degenerate inputs (non-positive spot,
@@ -273,13 +273,13 @@ source modules); signatures are illustrative, not API dumps.
   concrete consumer task topology and consumer groups are open.
 - **Liquidation close-order submission.** The close plan is computed and the
   `margin.liquidation` state machine declared; the market-order submission to
-  Ex8:ME, retry/escalation, and the `failed` escalation path are open.
+  Exchange8:ME, retry/escalation, and the `failed` escalation path are open.
 - **SPAN / portfolio margin.** The `margin_model` column declares four
   models; the engine implements the bps-based (isolated/cross) requirement —
   SPAN and portfolio margin are design-level open questions.
 - **Index-source binding.** Which `margin.contract` index feed drives funding
   and expiry settlement (constituents, outlier rejection, staleness guards)
-  is owned by Ex8:VFeeds and not yet bound here.
+  is owned by Exchange8:VFeeds and not yet bound here.
 - **Funding posting rails.** Funding is a posting, not a trade; the fiat
   (Bank8:Ledger) / custody (crypto) rail integration for moving value
   between longs and shorts is open.
@@ -292,7 +292,7 @@ source modules); signatures are illustrative, not API dumps.
   endpoint naming (`/v1/admin/accounts` vs the mounted
   `/v1/admin/margin-accounts`) are open.
 - **Physical-delivery workflow.** The expiry engine records delivery
-  obligations; the custody/CCP handoff downstream belongs to Ex8:Settlement
+  obligations; the custody/CCP handoff downstream belongs to Exchange8:Settlement
   and is not wired here.
 - **Margin-call lifecycle.** `margin.margin_call` is an append-only event
   table; a margin-call lifecycle (acknowledgment, expiry, escalation rules)

@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Service self-registration data for Ex8:MARGIN (generated; hand-tune freely).
+//! Service self-registration data for Exchange8:MARGIN (generated; hand-tune freely).
 //!
 //! Self-description surface: roles, scopes, error codes, admin UI, SQL, M2M
 //! grants, and the seeded Shield scope-mirror policies — consumed by

@@ -1,8 +1,8 @@
-# DESIGN.md: Ex8:Margin — Detailed Design Document
+# DESIGN.md: Exchange8:Margin — Detailed Design Document
 
 ## 1. Scope & Context
 
-Ex8:Margin owns the derivatives-risk domain inside one environment: the
+Exchange8:Margin owns the derivatives-risk domain inside one environment: the
 derivative contract master (`margin.contract`), the net-position ledger
 (`margin.contract_position`), margin accounts (`margin.margin_account`), the
 risk-event tables (`margin.margin_call`, `margin.liquidation`), perpetual
@@ -10,17 +10,17 @@ funding history (`margin.funding_rate`), option positions
 (`margin.option_position`), the Greeks cache (`margin.greeks_snapshot`), and
 the futures/option expiry settlement flow. It explicitly does **not** own:
 
-- synchronous pre-trade authorization — Ex8:Risk is the stateless gate
+- synchronous pre-trade authorization — Exchange8:Risk is the stateless gate
   (option Greeks *pre-trade* checks consume the Greeks engine values, the
   decision stays with the caller's authorization pipeline);
 - order entry, matching, and the liquidation close-order execution itself —
-  Ex8:ME matches; the close plan margin computes is submitted to the market
+  Exchange8:ME matches; the close plan margin computes is submitted to the market
   by the margin cycle wiring, not matched internally;
-- trade persistence and clearing — Ex8:Clearing consumes ME events and
+- trade persistence and clearing — Exchange8:Clearing consumes ME events and
   feeds margin the cleared trade/settlement facts;
-- index publication — Ex8:VFeeds owns index composition and publishes the
+- index publication — Exchange8:VFeeds owns index composition and publishes the
   index updates margin marks against;
-- external settlement rails (custody, CCP) — Ex8:Settlement consumes the
+- external settlement rails (custody, CCP) — Exchange8:Settlement consumes the
   settlement/expiry outcomes; margin records obligations only;
 - event durability fan-out and audit delivery — platform planes
   (Sentin8:Bus, Sentin8:Sys) via the local outbox and journal tables below;
@@ -32,13 +32,13 @@ the futures/option expiry settlement flow. It explicitly does **not** own:
 ```mermaid
 graph TD
     subgraph Env["exchange8 environment (one env_id per tenant env)"]
-        ME["Ex8:ME (trade executions)"]
-        CLR["Ex8:Clearing (trades, settlement due)"]
-        VF["Ex8:VFeeds (index:updated)"]
-        REF["Ex8:RefData (position:adjusted at ex-date)"]
-        MG["Ex8:Margin (exchange8-margin)"]
-        SETTLE["Ex8:Settlement (external rails)"]
-        GW["Ex8:Gateway (margin calls to brokers)"]
+        ME["Exchange8:ME (trade executions)"]
+        CLR["Exchange8:Clearing (trades, settlement due)"]
+        VF["Exchange8:VFeeds (index:updated)"]
+        REF["Exchange8:RefData (position:adjusted at ex-date)"]
+        MG["Exchange8:Margin (exchange8-margin)"]
+        SETTLE["Exchange8:Settlement (external rails)"]
+        GW["Exchange8:Gateway (margin calls to brokers)"]
     end
     AUTH["Sentin8:Auth (M2M issuance, JWKS)"]
     PPL["Sentin8:Policy (Shield engine)"]
@@ -189,7 +189,7 @@ graph TD
 sequenceDiagram
     autonumber
     participant CR as Sentin8:Cron (schedule)
-    participant MG as Ex8:Margin (cycle worker)
+    participant MG as Exchange8:Margin (cycle worker)
     participant DB as margin schema (db exchange8)
     participant CORE as Pure risk core
     participant BUS as Sentin8:Bus
@@ -233,8 +233,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    participant SRC as Ex8:VFeeds (index:updated) · Sentin8:Cron
-    participant MG as Ex8:Margin (MTM run)
+    participant SRC as Exchange8:VFeeds (index:updated) · Sentin8:Cron
+    participant MG as Exchange8:Margin (MTM run)
     participant DB as margin schema
     participant CORE as Pure risk core
 
@@ -261,7 +261,7 @@ sequenceDiagram
     participant CORE as evaluate_liquidation (pure)
     participant DB as margin schema
     participant BUS as Sentin8:Bus
-    participant ME as Ex8:ME (close order)
+    participant ME as Exchange8:ME (close order)
 
     CY->>CORE: evaluate_liquidation(account, contract, state, mark)
     alt position flat OR check Ok
@@ -271,7 +271,7 @@ sequenceDiagram
         CY->>DB: INSERT margin.liquidation (state='pending') + outbox row + audit row — one tx
         CY->>BUS: margin.liquidation event via relay (outbox → POST /v1/produce)
         BUS-->>CY: ack (relayed=true)
-        Note over CY,ME: close order submission to Ex8:ME and the pending→submitted→filled/failed transition are the open wiring (Open Questions)
+        Note over CY,ME: close order submission to Exchange8:ME and the pending→submitted→filled/failed transition are the open wiring (Open Questions)
         alt close order fills
             ME-->>CY: fill → UPDATE margin.liquidation state='filled'
         else close order fails repeatedly
@@ -286,7 +286,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant CR as Sentin8:Cron (expiry window)
-    participant MG as Ex8:Margin (expiry worker)
+    participant MG as Exchange8:Margin (expiry worker)
     participant EXP as ExpiryEngine (pure)
     participant DB as margin schema
     participant BUS as Sentin8:Bus
@@ -458,7 +458,7 @@ Per-table notes:
 - `margin.contract` — derivative contract master keyed `(env_id, symbol)`;
   `contract_type`/`option_type`/`exercise_style`/`settlement_type`/
   `margin_model`/`allocation_method` are CHECK-enforced vocabularies shared
-  with the futures/options designs; `allocation_method` drives Ex8:ME within-
+  with the futures/options designs; `allocation_method` drives Exchange8:ME within-
   level allocation, margin reads it as contract metadata. Env-scoped RLS.
 - `margin.contract_position` — the serving net-position state event-sourced
   from the trade stream; named `contract_position` because `position` is a
@@ -558,7 +558,7 @@ sequenceDiagram
     autonumber
     participant UI as Sentin8:Dash (RFW) / trader app
     participant BFF as Sentin8:BFF
-    participant MG as Ex8:Margin query routes
+    participant MG as Exchange8:Margin query routes
     participant SHIELD as Shield engine cache
     participant DB as margin schema
     UI->>BFF: GET /proxy/exchange8-margin/v1/positions (bearer user token, exchange8:position:read)
@@ -589,8 +589,8 @@ flowchart TD
     G --> D
     E -->|permanent failure after retries| DLQ["Bus DLQ (GET /v1/dlq) → manual replay"]
     F --> H["Bus stream family (XADD)"]
-    H -->|direct consumer| I1["Ex8:Clearing / Ex8:Settlement consume (settlement triggers)"]
-    H -->|direct consumer| I2["Ex8:Gateway margin-call notifications"]
+    H -->|direct consumer| I1["Exchange8:Clearing / Exchange8:Settlement consume (settlement triggers)"]
+    H -->|direct consumer| I2["Exchange8:Gateway margin-call notifications"]
     H -->|trigger subscription| I3["Consumer group → function/workflow where declared in the registry"]
     A2["mutation / admin change"] --> AJ["INSERT margin.audit_journal (action, actor, before/after) — same tx"]
     AJ --> P["Shell pusher → Sys POST /v1/audit (M2M sentin8:sys:audit:write)"]
@@ -689,7 +689,7 @@ flowchart TD
 - **Index feed stall.** MTM holds the last known mark (the
   `margin.margin_account` `last_mark`/`last_mark_ts` trail); liquidation
   decisions use the last-known index and are auditable; the feed outage is
-  the upstream (Ex8:VFeeds) concern.
+  the upstream (Exchange8:VFeeds) concern.
 - **Outbox relay to Bus.** `margin.outbox` rows accumulate unrelayed
   (`relay_attempts` grows); the pg_notify wake-up plus the 5s safety poll
   replays in `created_at` order when the Bus (or its DCR) recovers;
@@ -912,14 +912,14 @@ graph TD
 - Inbound consumer wiring: the `sentin8:bus:consume` workloads
   (`exchange8:margin`/`margin`) are registered, but consumer groups, batched
   cycle workers, and per-event recompute semantics are open.
-- Liquidation close-order submission to Ex8:ME (framed stream path), the
+- Liquidation close-order submission to Exchange8:ME (framed stream path), the
   `pending → submitted → filled/failed` driver, retry/backoff, and the admin
   escalation (audited) are open.
 - SPAN and portfolio margin models: the contract master declares four
   `margin_model` values; the engine implements the bps-based (isolated/cross)
   requirement — SPAN/portfolio pricing is a design decision (listed-futures
   standard) not yet implemented.
-- Expiry settlement source binding: which index feed (Ex8:VFeeds
+- Expiry settlement source binding: which index feed (Exchange8:VFeeds
   constituent/method/staleness configuration) drives funding premium index
   and expiry settlement averages is not yet bound to `margin.contract`.
 - Funding posting rails: moving value between longs and shorts via
@@ -930,15 +930,15 @@ graph TD
   `margin.greeks_snapshot` is declared but its writer is open.
 - Options expiry/assignment flow: auto-exercise thresholds, assignment
   methods (pro-rata vs random), and the exercise/assignment event vocabulary
-  (Ex8:Clearing-owned) are exchange-policy decisions pending final rules.
+  (Exchange8:Clearing-owned) are exchange-policy decisions pending final rules.
 - Durable `margin.margin_call` lifecycle (acknowledgment, expiry, escalation)
   and whether margin calls block further opening trades in the pre-trade
-  pipeline (Ex8:Risk reads) — exchange-policy decision pending.
+  pipeline (Exchange8:Risk reads) — exchange-policy decision pending.
 - RFW admin page mounts for the declared
   `/v1/admin/ui/{positions,accounts,liquidations}` pages and the accounts
   data-endpoint alias (`/v1/admin/accounts` vs `/v1/admin/margin-accounts`)
   are open.
-- Physical futures settlement handoff to Ex8:Settlement (custody/CCP) for the
+- Physical futures settlement handoff to Exchange8:Settlement (custody/CCP) for the
   delivery obligations the expiry engine records is open.
 - Sizing validation of the design budget (100k positions/env; MTM < 1 ms per
   position; liquidation decision < 10 ms) against live cycle latency is

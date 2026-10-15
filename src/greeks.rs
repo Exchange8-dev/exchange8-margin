@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Ex8:Margin options Greeks engine (Black–Scholes–Merton).
+//! Exchange8:Margin options Greeks engine (Black–Scholes–Merton).
 //!
 //! Computes delta/gamma/vega/theta/rho for european calls/puts from the
 //! underlying price, strike, implied vol, time-to-expiry, and risk-free rate.
