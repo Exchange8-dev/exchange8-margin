@@ -195,7 +195,7 @@ sequenceDiagram
     participant BUS as Sentin8:Bus
     participant SYS as Sentin8:Sys
 
-    CR->>MG: trigger margin cycle (schedule; M2M service workload)
+    CR->>MG: trigger margin cycle (schedule, M2M service workload)
     MG->>DB: BEGIN (pooled conn)
     MG->>DB: SELECT sentin8_set_tenant_context(env_id) — awaited, tx-local
     MG->>DB: SELECT contract_position / margin_account WHERE env_id = $1
@@ -564,7 +564,7 @@ sequenceDiagram
     UI->>BFF: GET /proxy/exchange8-margin/v1/positions (bearer user token, exchange8:position:read)
     BFF->>MG: delegated call (cert-bound M2M, act = originating user)
     MG->>SHIELD: policy require (step 5 — the only gate)
-    alt shield permit (no-set / no-match → deny; forbid beats permit)
+    alt shield permit (no-set / no-match → deny, forbid beats permit)
         MG->>DB: BEGIN → SELECT sentin8_set_tenant_context(env_id) (awaited, tx-local)
         MG->>DB: SELECT ... FROM margin.contract_position WHERE env_id = $1 (defense-in-depth clause)
         MG->>DB: COMMIT
@@ -714,20 +714,20 @@ sequenceDiagram
     participant DB as margin schema
     participant BUS as Sentin8:Bus
     participant SYS as Sentin8:Sys
-    OP->>SH: start instance (drained predecessor exited; no state in memory)
+    OP->>SH: start instance (drained predecessor exited, no state in memory)
     SH->>DB: capped pool up (EXCHANGE8_MARGIN_DATABASE_URL) + PostgreSQL 18 enforced
-    SH->>SH: Shield boot load (policy sets; fail-closed on unparsable text)
+    SH->>SH: Shield boot load (policy sets, fail-closed on unparsable text)
     SH->>DB: reset relay: SELECT unrelayed margin.outbox rows (partial index)
     SH->>BUS: POST /v1/produce (idempotency_key → no duplicate delivery)
     alt Bus still unreachable
-        SH->>SH: fail-open — service serves traffic; relay retries via 5s poll
+        SH->>SH: fail-open — service serves traffic, relay retries via 5s poll
     end
     SH->>DB: SELECT unpushed margin.audit_journal rows
     SH->>SYS: POST /v1/audit (workload margin-audit)
     alt Sys still unreachable
-        SH->>SH: fail-open — rows persist; pusher retries
+        SH->>SH: fail-open — rows persist, pusher retries
     end
-    SH-->>OP: ready (health Active in captain registry; next cron cycle recomputes)
+    SH-->>OP: ready (health Active in captain registry, next cron cycle recomputes)
 ```
 
 ## 7. Concurrency & Performance Model
