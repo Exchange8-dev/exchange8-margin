@@ -2,7 +2,11 @@
   "vertical": "exchange8",
   "services": [
     {
-      "service_type": "exchange8:margin"
+      "service_type": "exchange8:margin",
+      "telemetry_property": {
+        "slug": "margin",
+        "name": "Exchange8:Margin Telemetry"
+      }
     }
   ]
 }

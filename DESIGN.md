@@ -110,7 +110,6 @@ service):
    flag handling, PQ crypto provider install, DB pool via
    `sentin8_config::pg_pool::connect` (capped pool; DSN
    `EXCHANGE8_MARGIN_DATABASE_URL`), PostgreSQL 18+ enforcement, health
-   endpoint, mimalloc global allocator, graceful drain on
    `make upgrade-instance`.
 2. Shield boot (shell-owned, fail-closed): the service's policy sets are
    loaded into the per-process engine; unparsable text refuses to start. The

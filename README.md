@@ -17,7 +17,6 @@ The risk core is a set of pure Rust modules (`services/margin/src/margin.rs`,
 tokio, and no database dependency. The service binary wraps them in the
 Sentin8 platform shell (`sentin8::shell`): axum HTTP/ TLS surface,
 `--print-registration` self-registration, DB pool, health endpoint, Shield
-(declarative policy) admin API mount, mimalloc allocator, and graceful drain.
 The HTTP data surface is the RLS-scoped query API for positions, margin
 accounts, and liquidations plus RFW admin aliases; cycle scheduling (margin
 cycles, MTM runs, funding, expiry) is delegated to Sentin8:Cron. Durable event
