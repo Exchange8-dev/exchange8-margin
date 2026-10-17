@@ -1,4 +1,4 @@
-# DESIGN.md: Exchange8:Margin — Detailed Design Document
+# Exchange8:Margin — Detailed Design Document
 
 ## 1. Scope & Context
 
