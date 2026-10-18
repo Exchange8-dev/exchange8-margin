@@ -19,6 +19,7 @@ mod greeks;
 mod handlers;
 mod margin;
 mod registration;
+mod openapi;
 
 fn extend_router(
     app: axum::Router<std::sync::Arc<sentin8::shell::AppState>>,

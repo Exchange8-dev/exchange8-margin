@@ -57,6 +57,17 @@ pub struct PositionResponse {
     pub avg_entry: rust_decimal::Decimal,
     pub realized_pnl: rust_decimal::Decimal,
 }
+#[utoipa::path(
+    get,
+    path = "/v1/positions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Forbidden"),
+    ),
+    security(),
+    tag = "margin",
+)]
 
 /// `GET /v1/positions` — net positions per (account, contract).
 pub async fn list_positions(
@@ -108,6 +119,17 @@ pub struct MarginAccountResponse {
     pub last_mark: Option<rust_decimal::Decimal>,
     pub last_mark_ts: Option<chrono::DateTime<chrono::Utc>>,
 }
+#[utoipa::path(
+    get,
+    path = "/v1/margin-accounts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Forbidden"),
+    ),
+    security(),
+    tag = "margin",
+)]
 
 /// `GET /v1/margin-accounts` — margin balances + maintenance levels.
 pub async fn list_margin_accounts(
@@ -152,6 +174,17 @@ pub struct LiquidationResponse {
     pub state: String,
     pub ts: chrono::DateTime<chrono::Utc>,
 }
+#[utoipa::path(
+    get,
+    path = "/v1/liquidations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 401, description = "Not authenticated"),
+        (status = 403, description = "Forbidden"),
+    ),
+    security(),
+    tag = "margin",
+)]
 
 /// `GET /v1/liquidations` — liquidation events.
 pub async fn list_liquidations(
