@@ -6,7 +6,7 @@
 //! Service self-registration data for Exchange8:MARGIN (generated; hand-tune freely).
 //!
 //! Self-description surface: roles, scopes, error codes, admin UI, SQL, M2M
-//! grants, and the seeded Shield scope-mirror policies — consumed by
+//! grants, and the seeded Shield scope-mirror policies - consumed by
 //! `vertical enroll`; see `sentin8-service-self-registration-design.md` and
 //! `services/margin/DESIGN.md` §1 (container view) / §4 (workloads).
 
@@ -17,7 +17,7 @@ use sentin8::registration::{
     RelationDecl, SqlMigration,
 };
 
-/// The Shield text of the declared scope-mirror set — public so the
+/// The Shield text of the declared scope-mirror set - public so the
 /// policy wiring tests assert against the REAL seed.
 pub const SCOPE_MIRROR_POLICIES: &str = "permit(principal, action == Action::\"exchange8:position:read\", resource) when { principal.scopes.contains(\"exchange8:position:read\") };
 permit(principal, action == Action::\"exchange8:position:read\", resource) when { principal.scopes.contains(\"exchange8:position:all\") };
@@ -32,13 +32,13 @@ permit(principal, action == Action::\"exchange8:margin:read\", resource) when { 
 
 /// Default declarative policy set (Sentin8:Policy design §3.2/§3.4,
 /// seeded by `vertical enroll` as `origin='platform'`, `mode='enforced'`):
-/// action-granular scope permits over the LIVE effective scope set — the
+/// action-granular scope permits over the LIVE effective scope set - the
 /// exact mirror of the gates this service's handlers evaluate in step 5
 /// (policy design §4.3). Enforced: step 5 is the only gate; shadow is the
 /// emergency one-UPDATE rollback lever only.
 const POLICIES: &[PolicySetDecl] = &[PolicySetDecl {
     policy_set_name: "scope-mirror",
-    description: "Action-granular scope permits for exchange8:margin over the LIVE effective scope set. Enforced — step 5 is the only gate.",
+    description: "Action-granular scope permits for exchange8:margin over the LIVE effective scope set. Enforced - step 5 is the only gate.",
     // Shield text lives in SCOPE_MIRROR_POLICIES (single source).
     policies: SCOPE_MIRROR_POLICIES,
     schema: None,
@@ -46,7 +46,7 @@ const POLICIES: &[PolicySetDecl] = &[PolicySetDecl {
     default_enabled: true,
 }];
 
-/// Default ReBAC relation tuples (policy design §3.1c) — none declared by this
+/// Default ReBAC relation tuples (policy design §3.1c) - none declared by this
 /// service today; env admins author their own graph via the relations
 /// admin API.
 const RELATIONS: &[RelationDecl] = &[];
@@ -56,10 +56,10 @@ const PG_ROLES: &[PgRole] = &[PgRole {
     role: "exchange8_margin_service",
     bypass_rls: false,
     // Grants live in the exchange8 vertical database only (principles §6.6
-    // database-per-vertical, schema-per-service) — see
+    // database-per-vertical, schema-per-service) - see
     // services/margin/DESIGN.md §3 (data model ownership).
     database: "exchange8",
-    // This service owns all its reads — no cross-schema grants.
+    // This service owns all its reads - no cross-schema grants.
     cross_schema_grants: &[],
 }];
 
@@ -121,14 +121,14 @@ const ADMIN_UI_PAGES: &[AdminUiPage] = &[
 /// workload this service presents a certificate for; `vertical enroll` upserts the
 /// rows so the fail-closed registry map admits the registration. Scopes use the
 /// full vocabulary form:
-/// - `exchange8:margin` / `margin` — the service's own client (both
+/// - `exchange8:margin` / `margin` - the service's own client (both
 ///   spellings granted; runtime call sites use the bare short name, the
 ///   map looks up the exact workload): bus produce/consume + the
 ///   shared certificate identity.
-/// - `exchange8:margin-policy` / `margin-policy` — Shield hot-reload
+/// - `exchange8:margin-policy` / `margin-policy` - Shield hot-reload
 ///   consumer + stat emitter pair.
-/// - `margin-audit` — shell audit-journal pusher workload (§6.8; boot 8c).
-/// - `exchange8-margin-tls` — database-free HostContextResolver resolve workload
+/// - `margin-audit` - shell audit-journal pusher workload (§6.8; boot 8c).
+/// - `exchange8-margin-tls` - database-free HostContextResolver resolve workload
 ///   (TLS-RLS-4: `GET /v1/resolve/hostname`, scope
 ///   `sentin8:sys:instances:read`).
 const M2M_GRANTS: &[M2mGrant] = &[

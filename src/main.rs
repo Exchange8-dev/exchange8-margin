@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Exchange8:MARGIN service binary — derivatives positions, margin, liquidation, funding, Greeks.
+//! Exchange8:MARGIN service binary - derivatives positions, margin, liquidation, funding, Greeks.
 //!
 //! Design: `design/sentin8-exchange8-margin-technical-design.md`;
 //! detailed design: `services/margin/DESIGN.md` §2. Core logic in the

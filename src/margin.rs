@@ -3,19 +3,19 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Exchange8:Margin core — position ledger, MTM, margin, funding, liquidation.
+//! Exchange8:Margin core - position ledger, MTM, margin, funding, liquidation.
 //!
 //! Event-sourced position accounting for derivatives (futures, perpetuals,
 //! options positions downstream). Pure functions: the shell feeds trade
 //! events and index ticks, reads margin/liquidation/funding decisions.
 //!
-//! Design: `design/sentin8-exchange8-margin-technical-design.md` §4.1–4.5;
+//! Design: `design/sentin8-exchange8-margin-technical-design.md` §4.1-4.5;
 //! detailed design: `services/margin/DESIGN.md` §2 (risk core), §3 (state
 //! machines).
 
 /// Signed position with average entry price (raw fixed-point, i128 scale).
 ///
-/// P&L is tracked in *raw notional* units (price ticks × qty) — the shell
+/// P&L is tracked in *raw notional* units (price ticks × qty) - the shell
 /// divides by the instrument scale pair for display.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Position {
@@ -48,7 +48,7 @@ impl Position {
         if same_direction {
             // Addition: weighted average entry.
             let total = self.qty + signed_qty;
-            // qty×price summed — note avg_entry is per-unit, so:
+            // qty×price summed - note avg_entry is per-unit, so:
             // avg' = (avg × |old| + px × |add|) / (|old| + |add|)
             let old_abs = self.qty.unsigned_abs();
             let add_abs = signed_qty.unsigned_abs();

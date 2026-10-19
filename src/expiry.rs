@@ -6,11 +6,11 @@
 //! Exchange8:Margin binomial Greeks + futures expiry engine.
 //!
 //! - **Binomial**: Cox-Ross-Rubinstein American option pricing +
-//!   Greeks — the exercise-early premium path the BSM closed form cannot
+//!   Greeks - the exercise-early premium path the BSM closed form cannot
 //!   price (American puts / high-rate environments); see
 //!   `services/margin/DESIGN.md` §2 (pricing) and §7 (tree internals).
 //! - **Expiry & settlement engine**: futures contract expiry
-//!   `open → expiring → settled` state machine — final settlement price
+//!   `open → expiring → settled` state machine - final settlement price
 //!   (index average or last), position cash settlement at expiry, and the
 //!   physical delivery obligation alternative; see `services/margin/DESIGN.md`
 //!   §2 (expiry processing) and §3 (expiry state machine).
@@ -21,7 +21,7 @@
 use crate::greeks::{Greeks, OptionType};
 
 // ---------------------------------------------------------------------------
-// CRR binomial pricing + Greeks (American exercise) — DESIGN.md §7
+// CRR binomial pricing + Greeks (American exercise) - DESIGN.md §7
 // ---------------------------------------------------------------------------
 
 /// Cox-Ross-Rubinstein binomial tree parameters.
@@ -37,7 +37,7 @@ pub struct BinomialParams {
     pub t: f64,
 }
 
-/// American option price via the CRR binomial tree (O(N²)) — see
+/// American option price via the CRR binomial tree (O(N²)) - see
 /// `services/margin/DESIGN.md` §7 (CRR tree).
 ///
 /// u = e^{σ√dt}, d = 1/u, p = (e^{r·dt} − d)/(u − d); early-exercise value
@@ -83,7 +83,7 @@ pub fn crr_price_american(
 }
 
 /// Greeks from the binomial tree by finite differences (matches the BSM
-/// `Greeks` struct so risk consumers use one shape — DESIGN.md §7).
+/// `Greeks` struct so risk consumers use one shape - DESIGN.md §7).
 pub fn crr_greeks_american(
     option_type: OptionType,
     spot: f64,
@@ -141,7 +141,7 @@ pub fn crr_greeks_american(
 }
 
 // ---------------------------------------------------------------------------
-// Futures expiry & settlement — DESIGN.md §2 (expiry processing lifecycle)
+// Futures expiry & settlement - DESIGN.md §2 (expiry processing lifecycle)
 // ---------------------------------------------------------------------------
 
 /// Contract settlement style.
@@ -192,7 +192,7 @@ pub struct ExpiryEngine {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContractSettlement {
     pub contract_id: u32,
-    /// Final settlement price (raw) — the average of observations.
+    /// Final settlement price (raw) - the average of observations.
     pub settlement_price_raw: i128,
     /// Cash settlement P&L per account (mark-to-settlement vs entry).
     pub cash_pnl: Vec<(String, i128)>,
@@ -391,7 +391,7 @@ mod tests {
         assert_eq!(s.settlement_price_raw, 102_000);
         assert_eq!(s.state, ExpiryState::Settled);
         // Long gains 10 × 2_000 = 20_000; short loses the same. (Order is
-        // HashMap-derived — compare sorted.)
+        // HashMap-derived - compare sorted.)
         let mut pnl = s.cash_pnl.clone();
         pnl.sort();
         assert_eq!(pnl, vec![("A".into(), 20_000), ("B".into(), -20_000)]);
@@ -416,7 +416,7 @@ mod tests {
         );
         let s = e.settle(8).unwrap();
         assert!(s.cash_pnl.is_empty());
-        // Long receives +5, short delivers −5. (HashMap order — sorted.)
+        // Long receives +5, short delivers −5. (HashMap order - sorted.)
         let mut dels = s.deliveries.clone();
         dels.sort();
         assert_eq!(dels, vec![("A".into(), 5), ("B".into(), -5)]);

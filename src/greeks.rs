@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Exchange8:Margin options Greeks engine (Black–Scholes–Merton).
+//! Exchange8:Margin options Greeks engine (Black-Scholes-Merton).
 //!
 //! Computes delta/gamma/vega/theta/rho for european calls/puts from the
 //! underlying price, strike, implied vol, time-to-expiry, and risk-free rate.
@@ -26,7 +26,7 @@ pub enum OptionType {
 }
 
 /// Normal CDF via erf. Note: the argument is x/√2 = x · FRAC_1_SQRT_2
-/// (dividing by FRAC_1_SQRT_2 would multiply by √2 — a real bug class).
+/// (dividing by FRAC_1_SQRT_2 would multiply by √2 - a real bug class).
 fn norm_cdf(x: f64) -> f64 {
     0.5 * (1.0 + erf(x * std::f64::consts::FRAC_1_SQRT_2))
 }
@@ -86,7 +86,7 @@ pub struct Greeks {
     pub rho: f64,
 }
 
-/// Black–Scholes–Merton price + Greeks for european options.
+/// Black-Scholes-Merton price + Greeks for european options.
 ///
 /// Returns None on degenerate inputs (non-positive vol, strike, or tau).
 pub fn bsm_greeks(inp: &GreeksInput) -> Option<Greeks> {
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn vega_scales_with_sqrt_time_at_fixed_d1() {
         // Vega = S·φ(d1)·√T. d1 itself moves with T, so the √T proportionality
-        // is only visible when φ(d1) is held constant — e.g. at r=0, σ small,
+        // is only visible when φ(d1) is held constant - e.g. at r=0, σ small,
         // deep ITM where d1 barely moves. Compare two deep-ITM maturities.
         let short = bsm_greeks(&GreeksInput {
             option_type: OptionType::Call,
@@ -466,7 +466,7 @@ mod tests {
             rate: 0.0,
         })
         .unwrap();
-        // φ(d1) ≈ 0 at deep ITM for both — vega ratio dominated by √T but
+        // φ(d1) ≈ 0 at deep ITM for both - vega ratio dominated by √T but
         // not exact; assert the direction and rough magnitude instead.
         assert!(long.vega > short.vega);
         // For the exact relation use the closed form: vega ∝ √T at fixed d1,

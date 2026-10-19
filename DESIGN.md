@@ -1,4 +1,4 @@
-# Exchange8:Margin — Detailed Design Document
+# Exchange8:Margin - Detailed Design Document
 
 ## 1. Scope & Context
 
@@ -10,21 +10,21 @@ funding history (`margin.funding_rate`), option positions
 (`margin.option_position`), the Greeks cache (`margin.greeks_snapshot`), and
 the futures/option expiry settlement flow. It explicitly does **not** own:
 
-- synchronous pre-trade authorization — Exchange8:Risk is the stateless gate
+- synchronous pre-trade authorization - Exchange8:Risk is the stateless gate
   (option Greeks *pre-trade* checks consume the Greeks engine values, the
   decision stays with the caller's authorization pipeline);
-- order entry, matching, and the liquidation close-order execution itself —
+- order entry, matching, and the liquidation close-order execution itself -
   Exchange8:ME matches; the close plan margin computes is submitted to the market
   by the margin cycle wiring, not matched internally;
-- trade persistence and clearing — Exchange8:Clearing consumes ME events and
+- trade persistence and clearing - Exchange8:Clearing consumes ME events and
   feeds margin the cleared trade/settlement facts;
-- index publication — Exchange8:VFeeds owns index composition and publishes the
+- index publication - Exchange8:VFeeds owns index composition and publishes the
   index updates margin marks against;
-- external settlement rails (custody, CCP) — Exchange8:Settlement consumes the
+- external settlement rails (custody, CCP) - Exchange8:Settlement consumes the
   settlement/expiry outcomes; margin records obligations only;
-- event durability fan-out and audit delivery — platform planes
+- event durability fan-out and audit delivery - platform planes
   (Sentin8:Bus, Sentin8:Sys) via the local outbox and journal tables below;
-- cycle scheduling (margin cycles, MTM runs, funding, expiry windows) —
+- cycle scheduling (margin cycles, MTM runs, funding, expiry windows) -
   Sentin8:Cron owns all scheduling; margin runs no scheduler of its own.
 
 ### System context
@@ -65,13 +65,13 @@ graph TD
 graph TD
     subgraph MGProc["exchange8-margin binary (axum over sentin8::shell)"]
         HTTP["HTTP/TLS surface: /v1/health · /v1/positions · /v1/margin-accounts · /v1/liquidations · /v1/admin/* aliases + shared Shield admin API"]
-        REG_M["registration.rs — self-description (workloads, scopes, roles, error codes, admin UI, SQL, scope-mirror policies)"]
+        REG_M["registration.rs - self-description (workloads, scopes, roles, error codes, admin UI, SQL, scope-mirror policies)"]
         subgraph Core["Pure risk core (no tokio/DB/clock)"]
-            MARGIN["margin.rs — Position ledger · MarginState check · funding · liquidation plan"]
-            GREEKS["greeks.rs — BSM Greeks · portfolio netting · limit checks"]
-            EXPIRY["expiry.rs — CRR binomial · ExpiryEngine (window → settle)"]
+            MARGIN["margin.rs - Position ledger · MarginState check · funding · liquidation plan"]
+            GREEKS["greeks.rs - BSM Greeks · portfolio netting · limit checks"]
+            EXPIRY["expiry.rs - CRR binomial · ExpiryEngine (window → settle)"]
         end
-        HANDLERS["handlers.rs — RLS-scoped query handlers (Shield-gated)"]
+        HANDLERS["handlers.rs - RLS-scoped query handlers (Shield-gated)"]
         SHELLW["shell workers: outbox relay (boot §8b) · audit pusher (boot §8c) · policy hot-reload consumer · stat emitter"]
     end
     subgraph Planes["Platform planes"]
@@ -80,8 +80,8 @@ graph TD
         BUS2["Sentin8:Bus (POST /v1/produce)"]
         SYS2["Sentin8:Sys (POST /v1/audit · GET /v1/resolve/hostname)"]
         CRON2["Sentin8:Cron"]
-        TLS2["sentin8-tls — exchange8-margin-tls resolver (DB-free)"]
-        DBP[("PostgreSQL 18 — db exchange8, schema margin (role exchange8_margin_service)")]
+        TLS2["sentin8-tls - exchange8-margin-tls resolver (DB-free)"]
+        DBP[("PostgreSQL 18 - db exchange8, schema margin (role exchange8_margin_service)")]
     end
     HTTP --> HANDLERS
     HANDLERS --> MARGIN
@@ -106,7 +106,7 @@ graph TD
 The binary boots via `sentin8::shell::serve` (same shape for every exchange8
 service):
 
-1. `Sentin8Shell::new("exchange8:margin", "EXCHANGE8_MARGIN")` — registration
+1. `Sentin8Shell::new("exchange8:margin", "EXCHANGE8_MARGIN")` - registration
    flag handling, PQ crypto provider install, DB pool via
    `sentin8_config::pg_pool::connect` (capped pool; DSN
    `EXCHANGE8_MARGIN_DATABASE_URL`), PostgreSQL 18+ enforcement, health
@@ -182,7 +182,7 @@ graph TD
     HOTR --> SHIELDADMIN3
 ```
 
-### Request lifecycle — margin computation cycle (cron-scheduled)
+### Request lifecycle - margin computation cycle (cron-scheduled)
 
 ```mermaid
 sequenceDiagram
@@ -196,18 +196,18 @@ sequenceDiagram
 
     CR->>MG: trigger margin cycle (schedule, M2M service workload)
     MG->>DB: BEGIN (pooled conn)
-    MG->>DB: SELECT sentin8_set_tenant_context(env_id) — awaited, tx-local
+    MG->>DB: SELECT sentin8_set_tenant_context(env_id) - awaited, tx-local
     MG->>DB: SELECT contract_position / margin_account WHERE env_id = $1
     DB-->>MG: position + account rows
     MG->>CORE: requirement(mark) · effective_equity(mark) · check(mark)
     alt equity ≥ maintenance
         MG->>DB: persist refreshed account state (same tx)
-        Note over MG,DB: no risk event emitted — hold
+        Note over MG,DB: no risk event emitted - hold
     else equity < maintenance (Liquidate{requirement, shortfall})
         MG->>DB: INSERT margin.margin_call (requirement, shortfall, mark)
         MG->>DB: UPDATE margin.liquidation state='pending' (close plan: qty, side)
-        MG->>DB: INSERT margin.outbox (event, payload, relayed=false) — same tx
-        MG->>DB: INSERT margin.audit_journal (action, before/after) — same tx
+        MG->>DB: INSERT margin.outbox (event, payload, relayed=false) - same tx
+        MG->>DB: INSERT margin.audit_journal (action, before/after) - same tx
         MG->>DB: COMMIT (else roll back entirely)
         DB-->>MG: ok
         MG->>MG: pg_notify margin_outbox_changed → relay wakes
@@ -227,7 +227,7 @@ sequenceDiagram
     Note over MG: crash before COMMIT → no state change, next cycle recomputes deterministically
 ```
 
-### Request lifecycle — MTM update (index-driven / cron-driven)
+### Request lifecycle - MTM update (index-driven / cron-driven)
 
 ```mermaid
 sequenceDiagram
@@ -251,7 +251,7 @@ sequenceDiagram
     end
 ```
 
-### Request lifecycle — liquidation decision
+### Request lifecycle - liquidation decision
 
 ```mermaid
 sequenceDiagram
@@ -267,7 +267,7 @@ sequenceDiagram
         CORE-->>CY: None (no plan)
     else Liquidate{requirement, shortfall}
         CORE-->>CY: Liquidation{close_qty=|qty|, close_is_buy=(qty<0), shortfall, mark}
-        CY->>DB: INSERT margin.liquidation (state='pending') + outbox row + audit row — one tx
+        CY->>DB: INSERT margin.liquidation (state='pending') + outbox row + audit row - one tx
         CY->>BUS: margin.liquidation event via relay (outbox → POST /v1/produce)
         BUS-->>CY: ack (relayed=true)
         Note over CY,ME: close order submission to Exchange8:ME and the pending→submitted→filled/failed transition are the open wiring (Open Questions)
@@ -279,7 +279,7 @@ sequenceDiagram
     end
 ```
 
-### Request lifecycle — expiry processing
+### Request lifecycle - expiry processing
 
 ```mermaid
 sequenceDiagram
@@ -305,12 +305,12 @@ sequenceDiagram
         EXP-->>MG: ContractSettlement{deliveries per account (long +, short −)}
     end
     MG->>DB: BEGIN + set_tenant_context → persist settlement + position rows (same tx)
-    MG->>DB: margin.outbox INSERT (exchange8:margin expiry event, relayed=false) — same tx
-    MG->>DB: margin.audit_journal INSERT — same tx
+    MG->>DB: margin.outbox INSERT (exchange8:margin expiry event, relayed=false) - same tx
+    MG->>DB: margin.audit_journal INSERT - same tx
     MG->>DB: COMMIT
     MG->>BUS: relay produces the expiry event (idempotency_key = outbox row id)
     alt settle called twice (crash replay)
-        EXP-->>MG: recorded ContractSettlement returned (idempotent — no double settlement)
+        EXP-->>MG: recorded ContractSettlement returned (idempotent - no double settlement)
     end
 ```
 
@@ -322,7 +322,7 @@ declared in `init.sql` (no BYPASSRLS, no cross-schema grants; outbox/journal
 get `SELECT, INSERT, UPDATE`). RLS is `ENABLE`+`FORCE` on every table with
 `sentin8_context_initialized() AND env_id = sentin8_current_env_id()`
 policies; context is set per connection via `SELECT
-sentin8_set_tenant_context($1)` — always awaited, transaction-local.
+sentin8_set_tenant_context($1)` - always awaited, transaction-local.
 
 ```mermaid
 erDiagram
@@ -454,39 +454,39 @@ erDiagram
 
 Per-table notes:
 
-- `margin.contract` — derivative contract master keyed `(env_id, symbol)`;
+- `margin.contract` - derivative contract master keyed `(env_id, symbol)`;
   `contract_type`/`option_type`/`exercise_style`/`settlement_type`/
   `margin_model`/`allocation_method` are CHECK-enforced vocabularies shared
   with the futures/options designs; `allocation_method` drives Exchange8:ME within-
   level allocation, margin reads it as contract metadata. Env-scoped RLS.
-- `margin.contract_position` — the serving net-position state event-sourced
+- `margin.contract_position` - the serving net-position state event-sourced
   from the trade stream; named `contract_position` because `position` is a
   reserved SQL keyword that breaks unqualified references in RLS/trigger
   bodies. UNIQUE `(env_id, account_id, contract_id)`; signed `qty`,
   `avg_entry`, `realized_pnl` in `NUMERIC(18,8)`.
-- `margin.margin_account` — per-account equity with maintenance/initial bps
+- `margin.margin_account` - per-account equity with maintenance/initial bps
   (defaults 5000/10000) and the `last_mark`/`last_mark_ts` audit trail of the
   last mark application. UNIQUE `(env_id, account_id)`; the RLS matrix tests
   use this table as the representative probe.
-- `margin.margin_call` — append-only margin-call event rows
+- `margin.margin_call` - append-only margin-call event rows
   (requirement, shortfall, mark at `call_ts`); no lifecycle state columns
   (open product question).
-- `margin.liquidation` — liquidation records with the close-plan facts
+- `margin.liquidation` - liquidation records with the close-plan facts
   (`close_qty`, `close_is_buy`) and the close-order lifecycle
   `state ∈ pending|submitted|filled|failed`.
-- `margin.funding_rate` — per-applied-rate history: premium index, cap, and
+- `margin.funding_rate` - per-applied-rate history: premium index, cap, and
   the clamp-applied `rate_bps` (the reproducibility record of every funding
   posting).
-- `margin.option_position` — per-account option legs: `long_qty`/`short_qty`
+- `margin.option_position` - per-account option legs: `long_qty`/`short_qty`
   separately (no netting at the table level) plus `avg_premium`; the Greeks
   engine's per-portfolio netting is computed over these legs.
-- `margin.greeks_snapshot` — cached per-option Greeks + mark for the dashboard
+- `margin.greeks_snapshot` - cached per-option Greeks + mark for the dashboard
   and options-layer risk checks; latest-wins by `contract_id` + `ts`.
-- `margin.outbox` — platform `sentin8_outbox` shape: same-transaction staging
+- `margin.outbox` - platform `sentin8_outbox` shape: same-transaction staging
   for every domain event, `relayed`/`relayed_at`/`relay_attempts` bookkeeping,
   partial index on unrelayed rows, and the `outbox_notify_trigger` firing
   `pg_notify('margin_outbox_changed')` for the relay wake-up. RLS on `env_id`.
-- `margin.audit_journal` — platform `sentin8_audit` shape: same-transaction
+- `margin.audit_journal` - platform `sentin8_audit` shape: same-transaction
   journal rows with actor/subject/severity/correlation and before/after
   states, `pushed`/`pushed_at` delivery tracking, partial index on unpushed.
   A single `audit_journal_dml` policy (USING + WITH CHECK) guards the row
@@ -524,8 +524,8 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> Open: contract listed (settlement_type cash|physical)
     Open --> Expiring: expiry window opens (enter_expiry)
-    Expiring --> Expiring: observe(ts, price) — average window accrues
-    Expiring --> Settled: settle() — mean price; cash P&L or delivery obligations
+    Expiring --> Expiring: observe(ts, price) - average window accrues
+    Expiring --> Settled: settle() - mean price; cash P&L or delivery obligations
     Expiring --> Expiring: settle() with empty window → None (retry next cycle)
     Settled --> [*]
 ```
@@ -549,7 +549,7 @@ stateDiagram-v2
 
 Emitted domain events (declared vocabulary
 `exchange8:margin:{resource}:{operation}`; the concrete outbox event strings
-and payload mapping are the open writer surface — margin calls, liquidations,
+and payload mapping are the open writer surface - margin calls, liquidations,
 funding applications, position updates, expiry settlements):
 
 ```mermaid
@@ -562,7 +562,7 @@ sequenceDiagram
     participant DB as margin schema
     UI->>BFF: GET /proxy/exchange8-margin/v1/positions (bearer user token, exchange8:position:read)
     BFF->>MG: delegated call (cert-bound M2M, act = originating user)
-    MG->>SHIELD: policy require (step 5 — the only gate)
+    MG->>SHIELD: policy require (step 5 - the only gate)
     alt shield permit (no-set / no-match → deny, forbid beats permit)
         MG->>DB: BEGIN → SELECT sentin8_set_tenant_context(env_id) (awaited, tx-local)
         MG->>DB: SELECT ... FROM margin.contract_position WHERE env_id = $1 (defense-in-depth clause)
@@ -579,10 +579,10 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A["Margin cycle / MTM / liquidation / funding decision"] --> B["INSERT margin.outbox (event_type, stream_family, payload, relayed=false) — same tx as domain write; trigger fires pg_notify margin_outbox_changed"]
+    A["Margin cycle / MTM / liquidation / funding decision"] --> B["INSERT margin.outbox (event_type, stream_family, payload, relayed=false) - same tx as domain write; trigger fires pg_notify margin_outbox_changed"]
     B --> C["Shell relay wakes (LISTEN) or 5s safety poll"]
     C --> D["Read unrelayed rows (partial index idx_margin_outbox_unrelayed, created_at order)"]
-    D --> E["POST /v1/produce — M2M sentin8:bus:produce, idempotency_key = margin.outbox.id"]
+    D --> E["POST /v1/produce - M2M sentin8:bus:produce, idempotency_key = margin.outbox.id"]
     E -->|2xx| F["UPDATE relayed=true, relayed_at"]
     E -->|network/5xx| G["relay_attempts++ · leave unrelayed · backoff retry"]
     G --> D
@@ -591,7 +591,7 @@ flowchart TD
     H -->|direct consumer| I1["Exchange8:Clearing / Exchange8:Settlement consume (settlement triggers)"]
     H -->|direct consumer| I2["Exchange8:Gateway margin-call notifications"]
     H -->|trigger subscription| I3["Consumer group → function/workflow where declared in the registry"]
-    A2["mutation / admin change"] --> AJ["INSERT margin.audit_journal (action, actor, before/after) — same tx"]
+    A2["mutation / admin change"] --> AJ["INSERT margin.audit_journal (action, actor, before/after) - same tx"]
     AJ --> P["Shell pusher → Sys POST /v1/audit (M2M sentin8:sys:audit:write)"]
     P -->|2xx| Q["UPDATE pushed=true, pushed_at"]
     P -->|Sys outage| R["row stays unpushed · 5s pass retries (never lost)"]
@@ -602,7 +602,7 @@ flowchart TD
 
 - **Authentication.** Sentin8:Auth is the only issuer. Query callers present
   bearer tokens (user or cert-bound M2M); verification rides the shell
-  (`verify_token`) — issuer, signature, expiry, audience, token type. Internal
+  (`verify_token`) - issuer, signature, expiry, audience, token type. Internal
   cycle/relay/pusher workloads act with DCR-registered cert-bound M2M clients
   (scopes declared in `M2M_GRANTS`; both `exchange8:margin` and `margin`
   spellings granted so the runtime call sites' short names resolve).
@@ -616,8 +616,8 @@ flowchart TD
 - **Shield authorization.** Step 5 is the only gate. The seeded
   `scope-mirror` set (declared in `registration::SCOPE_MIRROR_POLICIES`,
   seeded `origin='platform'`, `mode='enforced'` by `vertical enroll`) carries
-  action-granular permits over the live effective scope set — exact mirror of
-  the gates the handlers evaluate — plus the platform-admin permits
+  action-granular permits over the live effective scope set - exact mirror of
+  the gates the handlers evaluate - plus the platform-admin permits
   (`sentin8:sys:admin`, `sentin8:sys:org:admin`, `sentin8:sys:env:admin`).
   Enforce runs the decision; shadow logs `would-deny` without blocking and is
   the emergency one-UPDATE rollback lever; tenant-authored forbid beats the
@@ -634,7 +634,7 @@ flowchart TD
   path; the query API rides the platform's edge protections (Sentin8:Proxy /
   Sentin8:BFF) and the capped connection pool
   (`sentin8_config::pg_pool::connect`, `SENTIN8_PG_POOL_MAX` default 3) is the
-  internal backpressure boundary — saturation waits, never overflows.
+  internal backpressure boundary - saturation waits, never overflows.
 - **Audit journaling.** Decisions and mutations ride
   `margin.audit_journal` (same transaction as the change where applicable)
   and are pushed by the shell pusher to Sys `POST /v1/audit`; a Sys outage
@@ -644,12 +644,12 @@ flowchart TD
   `make upgrade-instance`: the new instance reaches `Active` in the Valkey
   registry while the old drains in-flight requests; the relay/pusher workers
   are shell-owned and persist rows across the swap (nothing in-flight is
-  stateful — position/margin state lives in the database).
+  stateful - position/margin state lives in the database).
 - **TLS posture.** In-process TLS via the `sentin8-tls` library
   (post-quantum X25519MLKEM768 / ML-DSA-65, SLH-DSA root chain); the
   DB-free resolver workload `exchange8-margin-tls` resolves hostnames through
   the Sys owner API (`GET /v1/resolve/hostname`,
-  `sentin8:sys:instances:read`) — no platform-database DSN for resolution and
+  `sentin8:sys:instances:read`) - no platform-database DSN for resolution and
   no BYPASSRLS anywhere in the grant set (role
   `exchange8_margin_service`, `bypass_rls: false`, database `exchange8`,
   `cross_schema_grants: []`).
@@ -660,11 +660,11 @@ flowchart TD
 flowchart TD
     START["Cycle run (margin / MTM / funding / expiry)"] --> MARK{"mark input available?"}
     MARK -->|yes| CTX["BEGIN + set_tenant_context (tx-local)"]
-    MARK -->|no — index feed stall| LASTMARK["hold last known mark (last_mark from margin.margin_account) · alert"]
+    MARK -->|no - index feed stall| LASTMARK["hold last known mark (last_mark from margin.margin_account) · alert"]
     LASTMARK --> CTX
     CTX --> MATH["pure core: requirement · equity · check · funding · plan"]
     MATH --> W{"domain write + outbox + audit INSERT same tx"}
-    W -->|failure| RB["ROLLBACK — no state change · next cycle recomputes"]
+    W -->|failure| RB["ROLLBACK - no state change · next cycle recomputes"]
     RB --> START
     W -->|ok| RL["relay → POST /v1/produce (idempotency_key = outbox id)"]
     RL -->|non-2xx| RETRY["relay_attempts++ · unrelayed · backoff · 5s safety poll"]
@@ -673,14 +673,14 @@ flowchart TD
     AJ2["audit pusher → POST /v1/audit"] -->|Sys outage| AJP["row stays unpushed · retries (never lost)"]
     AJP --> AJ2
     SET["settle(contract)"] --> IDEM{"already settled?"}
-    IDEM -->|yes: crash replay| REC["return recorded ContractSettlement — no double settlement"]
+    IDEM -->|yes: crash replay| REC["return recorded ContractSettlement - no double settlement"]
     IDEM -->|no + empty window| HOLD["None · contract stays Expiring · retry next cycle"]
     HOLD --> SET
     IDEM -->|no + observations| PERS["persist settlement + terminalize (Settled)"]
 ```
 
 - **Restart / crash.** Position ledger, margin accounts, funding history,
-  calls, and liquidations are durable rows; the pure core is stateless —
+  calls, and liquidations are durable rows; the pure core is stateless -
   after restart the next cycle recomputes from the database (no caches to
   rebuild, no in-memory ledger to reconstruct), and the Greeks cache refeeds
   from the pricing inputs. Expiry `settle` replays to the recorded settlement
@@ -695,12 +695,12 @@ flowchart TD
   idempotency keys make replay safe; after permanent failure rows land in the
   Bus DLQ for manual replay.
 - **Audit pusher to Sys.** `margin.audit_journal` rows stay unpushed and the
-  pusher retries — audit is delayed, never lost (partial index on unpushed).
+  pusher retries - audit is delayed, never lost (partial index on unpushed).
 - **Shield boot failure.** Unparsable policy text refuses to start
   (fail-closed at boot); a later policy change arrives through the hot-reload
   consumer (`sentin8:bus:consume`) without a restart.
 - **Pool saturation.** The capped pool (`SENTIN8_PG_POOL_MAX`, default 3)
-  queues internal work; cycle jobs are small transactions — a saturated pool
+  queues internal work; cycle jobs are small transactions - a saturated pool
   delays cycles rather than degrading concurrent query traffic silently.
 
 Recovery sequence (after crash or upgrade):
@@ -719,12 +719,12 @@ sequenceDiagram
     SH->>DB: reset relay: SELECT unrelayed margin.outbox rows (partial index)
     SH->>BUS: POST /v1/produce (idempotency_key → no duplicate delivery)
     alt Bus still unreachable
-        SH->>SH: fail-open — service serves traffic, relay retries via 5s poll
+        SH->>SH: fail-open - service serves traffic, relay retries via 5s poll
     end
     SH->>DB: SELECT unpushed margin.audit_journal rows
     SH->>SYS: POST /v1/audit (workload margin-audit)
     alt Sys still unreachable
-        SH->>SH: fail-open — rows persist, pusher retries
+        SH->>SH: fail-open - rows persist, pusher retries
     end
     SH-->>OP: ready (health Active in captain registry, next cron cycle recomputes)
 ```
@@ -774,7 +774,7 @@ graph LR
 
 - **Task layout.** One axum request task per in-flight HTTP request; four
   shell-owned durable workers (relay, pusher, hot-reload consumer, stat
-  emitter); cron-triggered cycle work runs per cycle — no resident in-process
+  emitter); cron-triggered cycle work runs per cycle - no resident in-process
   scheduler (Sentin8:Cron owns all scheduling across replicas).
 - **Locking strategy.** No user-space locks anywhere: the risk core is pure
   functions over value types; the database is the only shared mutable state,
@@ -790,7 +790,7 @@ graph LR
   American); `margin.greeks_snapshot` is the read-through cache for repeated
   consumption; portfolio netting is O(legs).
 - **Backpressure.** All durable delivery is fail-open at the sender: relay and
-  pusher failures park rows in the local tables and retry — a Bus or Sys
+  pusher failures park rows in the local tables and retry - a Bus or Sys
   outage never blocks the query plane or a cycle; pool saturation queues
   cycle work by design.
 
@@ -812,7 +812,7 @@ Always-true conditions:
 5. `settle` is idempotent per contract: same inputs → returned recorded
    settlement; a settlement never books twice; the settlement price is always
    the arithmetic mean of the observation window.
-6. Degenerate Greeks inputs are rejected (`None`), never defaulted — no
+6. Degenerate Greeks inputs are rejected (`None`), never defaulted - no
    silently-quoted option price from non-positive vol/tau/strike/spot.
 7. No tenant-table read/write without a set tenant context on that
    connection; RLS `ENABLE` + `FORCE` on every `margin.*` table; role
@@ -845,14 +845,14 @@ not unchecked.
 
 ```mermaid
 graph TD
-    U1["Pure engine unit tests — margin.rs (positions, margin checks, funding, liquidation, idempotency)"]
-    U2["Pure engine unit tests — greeks.rs (BSM values, parity, degenerates, limits, erf references)"]
-    U3["Pure engine unit tests — expiry.rs (CRR convergence, early exercise, expiry cash/physical, idempotent settle)"]
-    P["Policy wiring tests — tests/policy.rs (pure, no DB): the REAL seeded scope-mirror text"]
-    H["Handler oneshot tests — tests/handlers_oneshot.rs (real router via tower oneshot, never-connected pool)"]
-    S["SQL integration — tests/sql_matrix.rs (live PostgreSQL as exchange8_probe, NOBYPASSRLS)"]
-    G["Workspace suites — shell wiring · vertical enroll · scope registration parity"]
-    E2E["E2E UI — platform level (out of this unit)"]
+    U1["Pure engine unit tests - margin.rs (positions, margin checks, funding, liquidation, idempotency)"]
+    U2["Pure engine unit tests - greeks.rs (BSM values, parity, degenerates, limits, erf references)"]
+    U3["Pure engine unit tests - expiry.rs (CRR convergence, early exercise, expiry cash/physical, idempotent settle)"]
+    P["Policy wiring tests - tests/policy.rs (pure, no DB): the REAL seeded scope-mirror text"]
+    H["Handler oneshot tests - tests/handlers_oneshot.rs (real router via tower oneshot, never-connected pool)"]
+    S["SQL integration - tests/sql_matrix.rs (live PostgreSQL as exchange8_probe, NOBYPASSRLS)"]
+    G["Workspace suites - shell wiring · vertical enroll · scope registration parity"]
+    E2E["E2E UI - platform level (out of this unit)"]
     U1 --> S
     U2 --> S
     U3["Scope matrix inside handlers.rs (auth constants vs require_any_shape, 403 for no/foreign/sibling scope)"] --> H
@@ -870,7 +870,7 @@ graph TD
   buy`), shortfall, and `flat account never liquidates`; funding
   pays-longs-when-premium-positive and clamp-to-cap; initial ≥ maintenance
   requirement ordering. Greeks: textbook ATM BSM values (price/delta/gamma/
-  vega/theta/rho), put–call parity `C − P = S − K e^{−rT}` and `Δc − Δp = 1`
+  vega/theta/rho), put-call parity `C − P = S − K e^{−rT}` and `Δc − Δp = 1`
   exactly, deep-ITM delta boundaries, degenerate-input rejection,
   N(0)/symmetry/N(1.96)/tails, portfolio netting (underlying + short call),
   limit checks (delta-notional/gamma/vega, absolute values for shorts),
@@ -880,14 +880,14 @@ graph TD
   settle-without-observations fails and stays `Expiring`, unknown contract
   rejected.
 - **Policy wiring tests** (`tests/policy.rs`, DB-free): the exact seeded
-  scope-mirror text drives the engine cache — no-set deny, enforced no-match
+  scope-mirror text drives the engine cache - no-set deny, enforced no-match
   deny, shadow never blocks (would-deny reported), mirror permits its own
   grants, M2M token-type parity, platform-admin scopes pass, forbid-beats-
   permit, role-keyed tenant sets participate, cross-env set isolation, every
   handler action covered by the declared mirror, enroll-time dry-run gate
   accepts the declared set.
 - **Handler oneshot tests** (`tests/handlers_oneshot.rs`, DB-free): the real
-  router through `tower::ServiceExt::oneshot` — every route rejects bearer-less
+  router through `tower::ServiceExt::oneshot` - every route rejects bearer-less
   requests 401 (or 415 where the body extractor runs first), never reaching
   the pool; wrong method 405 (not 404); unknown path 404; error envelope is
   the plain-text auth message (never SQL internals).
@@ -895,18 +895,18 @@ graph TD
   the `exchange8_probe` NOBYPASSRLS role): every table declared in this
   service's `init.sql` exists with FORCE RLS + policies; zero rows without
   context; insert rejected by WITH CHECK (savepoint-isolated);
-  own-env context sees exactly its probe row; cross-env zero rows — all
+  own-env context sees exactly its probe row; cross-env zero rows - all
   inside one rolled-back transaction; hermetic offline skip.
 - **Deliberately not tested here:** platform token verification internals,
   Shield engine internals beyond the wiring, RFW rendering, Bus/Sys wire
-  formats, E2E UI surfaces — owned by the platform's own suites (covered in
+  formats, E2E UI surfaces - owned by the platform's own suites (covered in
   the platform testing strategy doc).
 
 ## 10. Open Questions
 
 - Concrete outbound `event_type` strings and payload envelopes for
   `exchange8:margin:{resource}:{operation}` (calls, liquidations, funding
-  applications, position updates, expiry settlements) — the outbox schema,
+  applications, position updates, expiry settlements) - the outbox schema,
   relay, and workloads are declared; the writer mapping is the open surface.
 - Inbound consumer wiring: the `sentin8:bus:consume` workloads
   (`exchange8:margin`/`margin`) are registered, but consumer groups, batched
@@ -916,23 +916,23 @@ graph TD
   escalation (audited) are open.
 - SPAN and portfolio margin models: the contract master declares four
   `margin_model` values; the engine implements the bps-based (isolated/cross)
-  requirement — SPAN/portfolio pricing is a design decision (listed-futures
+  requirement - SPAN/portfolio pricing is a design decision (listed-futures
   standard) not yet implemented.
 - Expiry settlement source binding: which index feed (Exchange8:VFeeds
   constituent/method/staleness configuration) drives funding premium index
   and expiry settlement averages is not yet bound to `margin.contract`.
 - Funding posting rails: moving value between longs and shorts via
-  Bank8:Ledger postings (fiat) and/or the custody adapter (crypto) is open —
+  Bank8:Ledger postings (fiat) and/or the custody adapter (crypto) is open -
   funding is a posting, not a trade.
 - Greeks snapshot writer cadence (per index tick vs per cycle) and the
-  implied-vol surface source for non-flat smile assumptions —
+  implied-vol surface source for non-flat smile assumptions -
   `margin.greeks_snapshot` is declared but its writer is open.
 - Options expiry/assignment flow: auto-exercise thresholds, assignment
   methods (pro-rata vs random), and the exercise/assignment event vocabulary
   (Exchange8:Clearing-owned) are exchange-policy decisions pending final rules.
 - Durable `margin.margin_call` lifecycle (acknowledgment, expiry, escalation)
   and whether margin calls block further opening trades in the pre-trade
-  pipeline (Exchange8:Risk reads) — exchange-policy decision pending.
+  pipeline (Exchange8:Risk reads) - exchange-policy decision pending.
 - RFW admin page mounts for the declared
   `/v1/admin/ui/{positions,accounts,liquidations}` pages and the accounts
   data-endpoint alias (`/v1/admin/accounts` vs `/v1/admin/margin-accounts`)

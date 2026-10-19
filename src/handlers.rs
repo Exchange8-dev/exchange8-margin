@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 // SPDX-License-Identifier: Apache-2.0
 
-//! Exchange8:Margin data handlers — positions + margin accounts query API.
+//! Exchange8:Margin data handlers - positions + margin accounts query API.
 //!
 //! Every handler follows the platform authorization pipeline (§5): verify
 //! bearer → scope check → RLS context (same connection) → explicit
@@ -25,7 +25,7 @@ use uuid::Uuid;
 
 use sentin8::shell::{err_db, AppState};
 
-/// Scope constants for every handler in this module — single source of truth
+/// Scope constants for every handler in this module - single source of truth
 /// for both the call sites and the authorization matrix tests (see
 /// `services/margin/DESIGN.md` §4, §9).
 pub mod scopes {
@@ -69,7 +69,7 @@ pub struct PositionResponse {
     tag = "margin",
 )]
 
-/// `GET /v1/positions` — net positions per (account, contract).
+/// `GET /v1/positions` - net positions per (account, contract).
 pub async fn list_positions(
     State(state): State<Arc<AppState>>,
     headers: axum::http::HeaderMap,
@@ -131,7 +131,7 @@ pub struct MarginAccountResponse {
     tag = "margin",
 )]
 
-/// `GET /v1/margin-accounts` — margin balances + maintenance levels.
+/// `GET /v1/margin-accounts` - margin balances + maintenance levels.
 pub async fn list_margin_accounts(
     State(state): State<Arc<AppState>>,
     headers: axum::http::HeaderMap,
@@ -186,7 +186,7 @@ pub struct LiquidationResponse {
     tag = "margin",
 )]
 
-/// `GET /v1/liquidations` — liquidation events.
+/// `GET /v1/liquidations` - liquidation events.
 pub async fn list_liquidations(
     State(state): State<Arc<AppState>>,
     headers: axum::http::HeaderMap,
@@ -254,7 +254,7 @@ mod scope_matrix {
                 service_type: None,
             },
             // Bearer-path context: no certificate workload on the test
-            // identity (CERTFREE-4V — the field exists for the cert path).
+            // identity (CERTFREE-4V - the field exists for the cert path).
             workload: None,
         }
     }
@@ -338,7 +338,7 @@ mod scope_matrix {
             }
         }
         // Every declared constant must be wired into HANDLER_SCOPES. Shared
-        // constants across handlers are legitimate — dedup first.
+        // constants across handlers are legitimate - dedup first.
         all.sort_unstable();
         all.dedup();
         let mut declared = vec![scopes::POSITIONS_READ, scopes::MARGIN_READ];

@@ -3,7 +3,7 @@
 -- SPDX-FileCopyrightText: Copyright Contributors to the Exchange8:Margin
 -- SPDX-License-Identifier: Apache-2.0
 
--- Ex8:Margin — derivatives: contracts, positions, margin accounts, funding.
+-- Ex8:Margin - derivatives: contracts, positions, margin accounts, funding.
 --
 -- Design: design/sentin8-exchange8-data-model-technical-design.md §3.6 (MARGIN).
 -- No migration code (new platform): `sentin8-cli vertical init` applies this.
@@ -152,7 +152,7 @@ END $$;
 
 -- ---------------------------------------------------------------------------
 -- Per-service role grants (schema-per-service: this service owns schema
--- `margin`; grants live in db `exchange8` only — design doc §1).
+-- `margin`; grants live in db `exchange8` only - design doc §1).
 -- ---------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -165,7 +165,7 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
--- Local outbox (DBX §6.7 — generated from `sentin8_outbox::outbox_table_sql(
+-- Local outbox (DBX §6.7 - generated from `sentin8_outbox::outbox_table_sql(
 -- "margin")`): rows written in the same DB transaction as the domain change;
 -- the shell's relay (boot step §8b) pushes them to Bus `POST /v1/produce`.
 -- ---------------------------------------------------------------------------
@@ -219,7 +219,7 @@ CREATE TRIGGER outbox_notify_trigger
     EXECUTE FUNCTION margin.margin_notify_outbox();
 
 -- ---------------------------------------------------------------------------
--- Local audit journal (DBX §6.8 — generated from
+-- Local audit journal (DBX §6.8 - generated from
 -- `sentin8_audit::audit_journal_sql("margin")`): rows written in the same
 -- transaction as the domain change; the shell's pusher (boot step §8c) pushes
 -- them to Sys `POST /v1/audit` (`sentin8:sys:audit:write`). A Sys outage

@@ -846,7 +846,7 @@
         "tags": [
           "margin"
         ],
-        "summary": "`GET /v1/liquidations` — liquidation events.",
+        "summary": "`GET /v1/liquidations` - liquidation events.",
         "operationId": "list_liquidations",
         "responses": {
           "200": {
@@ -872,7 +872,7 @@
         "tags": [
           "margin"
         ],
-        "summary": "`GET /v1/margin-accounts` — margin balances + maintenance levels.",
+        "summary": "`GET /v1/margin-accounts` - margin balances + maintenance levels.",
         "operationId": "list_margin_accounts",
         "responses": {
           "200": {
@@ -898,7 +898,7 @@
         "tags": [
           "margin"
         ],
-        "summary": "`GET /v1/positions` — net positions per (account, contract).",
+        "summary": "`GET /v1/positions` - net positions per (account, contract).",
         "operationId": "list_positions",
         "responses": {
           "200": {

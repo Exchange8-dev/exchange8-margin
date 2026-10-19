@@ -8,7 +8,7 @@ the net-position ledger per (environment, account, contract) for futures,
 perpetuals, and options; revalues that ledger against mark/index prices
 (mark-to-market); computes initial and maintenance margin and decides
 liquidations; applies perpetual funding; prices options with the
-Black–Scholes–Merton closed form (European) and the Cox-Ross-Rubinstein
+Black-Scholes-Merton closed form (European) and the Cox-Ross-Rubinstein
 binomial tree (American, early exercise); and runs the futures/expiry
 settlement state machine (`open → expiring → settled`, cash or physical).
 
@@ -29,14 +29,14 @@ Sentin8:Bus and `margin.audit_journal` pushes to Sentin8:Sys.
   Exchange8:Risk is a stateless microsecond pure-function gate; margin, by contrast,
   must maintain positions over time, revalue them continuously, close
   breached positions, and never lose a funding or liquidation decision. Merging
-  the two would force one latency budget on two incompatible workloads — the
+  the two would force one latency budget on two incompatible workloads - the
   platform therefore splits them (margin design §1).
 - **Defensible account risk under audit.** Average-entry position math,
   realized/unrealized P&L, maintenance-requirement checks and shortfall
   quantification must be provable, table-tested pure functions. A margin check
   that cannot be replayed bit-exactly is a dispute waiting to happen.
 - **Options are Greeks-shaped, not notional-shaped.** Option risk limits act
-  on delta-equivalent notional, gamma, and vega exposure — a different
+  on delta-equivalent notional, gamma, and vega exposure - a different
   dimension than notional-based pre-trade checks, computed from one shared
   Greeks shape so portfolio netting stays exact.
 - **Expiry must be exact and idempotent.** A contract settles once, at one
@@ -103,10 +103,10 @@ graph TD
 The shell (`main.rs`) boots the DB pool (`EXCHANGE8_MARGIN_DATABASE_URL`), the
 Shield boot load (fail-closed on unparsable policy text), the query router,
 the shared policy-admin mount, the `margin.outbox` relay, and the
-`margin.audit_journal` pusher. The risk modules — `margin.rs` (position
+`margin.audit_journal` pusher. The risk modules - `margin.rs` (position
 ledger, margin checks, funding, liquidation), `greeks.rs` (BSM Greeks +
 portfolio netting + limits), `expiry.rs` (CRR binomial + expiry/settlement
-state machine) — are free of tokio, DB, and clock dependencies, which is what
+state machine) - are free of tokio, DB, and clock dependencies, which is what
 makes unit testing and idempotent expiry exact.
 
 ## 4. Key Traits and Data Structures
@@ -114,46 +114,46 @@ makes unit testing and idempotent expiry exact.
 Concept and data-structure overview (the authoritative shapes live in the
 source modules); signatures are illustrative, not API dumps.
 
-- **Position ledger (`Position`)** — signed net quantity, volume-weighted
+- **Position ledger (`Position`)** - signed net quantity, volume-weighted
   average entry, and accumulated realized P&L in raw fixed-point units.
   `apply_fill` handles the three fill cases: *addition* (weighted average in
   absolute-quantity space), *reduction* (realizes P&L against the average,
   keeps it), and *flip* (realizes the whole old position, rebuilds the average
   from the new price). A close to flat resets the entry and keeps the realized
   P&L.
-- **Margin account (`MarginState`)** — posted equity plus the per-account
+- **Margin account (`MarginState`)** - posted equity plus the per-account
   maintenance and initial margin basis points. Requirement is
   `|qty| × mark × bps/10⁴`; effective equity is `equity + unrealized(mark)`
   (cash-settled variation); the check yields either *Ok* or *Liquidate* with
   the quantified shortfall.
-- **Funding (`funding_payment`)** — pure perpetuals funding:
+- **Funding (`funding_payment`)** - pure perpetuals funding:
   `clamp(premium_index, ±cap) × qty × mark / 10⁴`, sign flowing through the
-  signed quantity — longs pay when the premium index is positive, shorts
+  signed quantity - longs pay when the premium index is positive, shorts
   receive, and the sign flips below zero.
-- **Liquidation plan (`Liquidation`, `evaluate_liquidation`)** — for a
+- **Liquidation plan (`Liquidation`, `evaluate_liquidation`)** - for a
   breached non-flat account: close quantity `|qty|`, close side opposite the
   position (a long is closed by selling, a short by buying), the shortfall,
   and the mark the check ran against. The plan is the input to the market
   close order destined for Exchange8:ME.
-- **Greeks engine (`GreeksInput`, `Greeks`)** — Black–Scholes–Merton closed
+- **Greeks engine (`GreeksInput`, `Greeks`)** - Black-Scholes-Merton closed
   form for European calls/puts: theoretical price plus delta, gamma, vega,
   theta, rho per unit of underlying. Degenerate inputs (non-positive spot,
   strike, vol, tau) are rejected, never defaulted. The normal CDF is an
-  erf-based rational approximation (Abramowitz–Stegun), with the √2 argument
+  erf-based rational approximation (Abramowitz-Stegun), with the √2 argument
   conversion handled explicitly.
-- **Portfolio netting (`GreeksLeg`, `PortfolioGreeks`, `aggregate_greeks`)** —
+- **Portfolio netting (`GreeksLeg`, `PortfolioGreeks`, `aggregate_greeks`)** -
   portfolio-level Greeks: underlying legs contribute `±qty` delta; option legs
   contribute `qty × multiplier × per-unit Greek`. Netting is per account, not
   per leg.
-- **Options risk check (`GreeksLimits`, `check_greeks`)** — delta-equivalent
+- **Options risk check (`GreeksLimits`, `check_greeks`)** - delta-equivalent
   notional (`delta × underlying price`), gamma, and vega exposure limits per
   account, evaluated on absolute values so short books trip the same limits.
-- **CRR binomial (`BinomialParams`, `crr_price_american`)** —
+- **CRR binomial (`BinomialParams`, `crr_price_american`)** -
   Cox-Ross-Rubinstein backward induction with early exercise
   (`max(intrinsic, continuation)` at every node); the American-exercise premium
   path the BSM closed form cannot price. Greeks come from finite differences
   of the tree and reuse the same `Greeks` shape as the closed form.
-- **Expiry engine (`ExpiryEngine`, `ExpiryState`, `ContractSettlement`)** —
+- **Expiry engine (`ExpiryEngine`, `ExpiryState`, `ContractSettlement`)** -
   the futures/expiry lifecycle: `enter_expiry` opens the window
   (`expiring`), `observe` accrues settlement-price observations, and `settle`
   computes the arithmetic-mean settlement price, then either cash P&L per
@@ -166,7 +166,7 @@ source modules); signatures are illustrative, not API dumps.
 - **Pattern choices.**
   - *Pure core + thin shell.* All risk math lives in pure value types; the
     shell owns I/O, identity, persistence, and scheduling delegation. Risk
-    formulas are the auditable surface of the venue — embedding them in
+    formulas are the auditable surface of the venue - embedding them in
     request handlers or DB tasks would make them untestable and un-replayable.
   - *Outbox-first events.* Margin decisions (calls, liquidations, funding) are
     staged in `margin.outbox` in the same transaction as the domain write and
@@ -178,7 +178,7 @@ source modules); signatures are illustrative, not API dumps.
     where it is reported per unit, never stored as money.
 - **Dispatching.** Option pricing splits by nature, not by strategy object:
   European contracts use the BSM closed form, American exercise uses the CRR
-  tree — a closed enum over a closed set of models. Dynamic dispatch would
+  tree - a closed enum over a closed set of models. Dynamic dispatch would
   put a vtable between the risk cycle and its pricing for no extensibility
   benefit, while the enum keeps each pricer pure and property-testable
   (parity, convergence, exercise-bound).
@@ -186,7 +186,7 @@ source modules); signatures are illustrative, not API dumps.
   request tasks serve the RLS-scoped query surface, and the durable workers
   (outbox relay, audit pusher, policy hot-reload consumer, stat emitter) are
   shell-owned tokio tasks. Cycle scheduling lives in Sentin8:Cron rather than
-  an in-process loop — one scheduler for the whole platform, no per-instance
+  an in-process loop - one scheduler for the whole platform, no per-instance
   duplication across replicas, and retries survive instance drain.
 - **Rejected alternatives.**
   - *In-process scheduler*: a second scheduling engine would double-fire
@@ -194,7 +194,7 @@ source modules); signatures are illustrative, not API dumps.
     scheduling by platform rule.
   - *Event-sourced rebuild as the only position state*: the margin design
     reconciles the event-sourced position ledger against the trade stream, but
-    the durable table (`margin.contract_position`) is the serving state —
+    the durable table (`margin.contract_position`) is the serving state -
     rebuilding a live book from the trade stream on every start would couple
     margin availability to replay latency.
   - *Float pricing in the margin engine*: basis-point fractions fit fixed
@@ -216,7 +216,7 @@ source modules); signatures are illustrative, not API dumps.
   crossing price.
 - **Margin check order.** Requirement is computed from `|qty| × mark × bps`,
   then compared to effective equity (posted equity + unrealized variation).
-  The check outcome carries the requirement, and on breach the shortfall —
+  The check outcome carries the requirement, and on breach the shortfall -
   the liquidation engine prices the close from the plan, not from a re-derivation.
 - **Funding sign convention.** `funding_payment` returns the amount *charged
   to the account*: a long (positive qty) with a positive clamped premium pays
@@ -229,10 +229,10 @@ source modules); signatures are illustrative, not API dumps.
   `pending/submitted/filled/failed` for the submit → fill cycle of the close
   order.
 - **Greeks numerical hygiene.** The `erf` rational approximation (A&S 7.1.26)
-  carries a residual of about `1e-9` at zero — tests assert against reference
+  carries a residual of about `1e-9` at zero - tests assert against reference
   values at that tolerance, and the CDF argument is scaled by
-  `FRAC_1_SQRT_2` (multiplying by the constant, then by nothing else — the
-  inverted conversion is a documented bug class). Put–call parity and
+  `FRAC_1_SQRT_2` (multiplying by the constant, then by nothing else - the
+  inverted conversion is a documented bug class). Put-call parity and
   delta parity are asserted exactly in tests; gamma/vega equality across
   calls and pins the closed form.
 - **CRR tree.** `u = e^{σ√dt}`, `d = 1/u`, risk-neutral probability clamped
@@ -274,7 +274,7 @@ source modules); signatures are illustrative, not API dumps.
   `margin.liquidation` state machine declared; the market-order submission to
   Exchange8:ME, retry/escalation, and the `failed` escalation path are open.
 - **SPAN / portfolio margin.** The `margin_model` column declares four
-  models; the engine implements the bps-based (isolated/cross) requirement —
+  models; the engine implements the bps-based (isolated/cross) requirement -
   SPAN and portfolio margin are design-level open questions.
 - **Index-source binding.** Which `margin.contract` index feed drives funding
   and expiry settlement (constituents, outlier rejection, staleness guards)
