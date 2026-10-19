@@ -46,7 +46,7 @@ pub struct ListPositionsQuery {
     pub limit: Option<i64>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct PositionResponse {
     pub id: Uuid,
     pub env_id: Uuid,
@@ -61,7 +61,7 @@ pub struct PositionResponse {
     get,
     path = "/v1/positions",
     responses(
-        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 200, description = "OK", body = Vec<PositionResponse>),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Forbidden"),
     ),
@@ -108,7 +108,7 @@ pub async fn list_positions(
     Ok(Json(rows))
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct MarginAccountResponse {
     pub id: Uuid,
     pub env_id: Uuid,
@@ -123,7 +123,7 @@ pub struct MarginAccountResponse {
     get,
     path = "/v1/margin-accounts",
     responses(
-        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 200, description = "OK", body = Vec<MarginAccountResponse>),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Forbidden"),
     ),
@@ -162,7 +162,7 @@ pub async fn list_margin_accounts(
     Ok(Json(rows))
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct LiquidationResponse {
     pub id: Uuid,
     pub env_id: Uuid,
@@ -178,7 +178,7 @@ pub struct LiquidationResponse {
     get,
     path = "/v1/liquidations",
     responses(
-        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 200, description = "OK", body = Vec<LiquidationResponse>),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Forbidden"),
     ),

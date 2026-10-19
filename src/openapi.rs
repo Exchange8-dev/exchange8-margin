@@ -18,7 +18,7 @@ pub mod w {
         get,
         path = "/v1/health",
         responses(
-            (status = 200, description = "Service is healthy", body = serde_json::Value),
+            (status = 200, description = "Service is healthy", body = sentin8::middleware::health::LiveHealth),
         ),
         security(),
         tag = "margin",
@@ -29,7 +29,7 @@ pub mod w {
         get,
         path = "/v1/admin/positions",
         responses(
-            (status = 200, description = "OK", body = serde_json::Value),
+            (status = 200, description = "OK", body = Vec<crate::handlers::PositionResponse>),
             (status = 403, description = "Forbidden"),
         ),
         security(),
@@ -42,7 +42,7 @@ pub mod w {
         get,
         path = "/v1/admin/margin-accounts",
         responses(
-            (status = 200, description = "OK", body = serde_json::Value),
+            (status = 200, description = "OK", body = Vec<crate::handlers::MarginAccountResponse>),
             (status = 403, description = "Forbidden"),
         ),
         security(),
@@ -55,7 +55,7 @@ pub mod w {
         get,
         path = "/v1/admin/liquidations",
         responses(
-            (status = 200, description = "OK", body = serde_json::Value),
+            (status = 200, description = "OK", body = Vec<crate::handlers::LiquidationResponse>),
             (status = 403, description = "Forbidden"),
         ),
         security(),
@@ -97,7 +97,12 @@ crate::openapi::w::margin_health,
         sentin8::shell::policy_put_attribute,
         sentin8::shell::policy_delete_attribute,
     ),
-    components(schemas()),
+    components(schemas(
+        crate::handlers::PositionResponse,
+        crate::handlers::MarginAccountResponse,
+        crate::handlers::LiquidationResponse,
+        sentin8::middleware::health::LiveHealth,
+    )),
     security(),
     tags(
         (name = "margin", description = "Exchange8:Margin"),
