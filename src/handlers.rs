@@ -217,11 +217,11 @@ pub async fn list_liquidations(
     Ok(Json(rows))
 }
 
-// ---------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 // Authorization matrix tests (see services/margin/DESIGN.md §9). DB-free: the
 // decision the handlers delegate to (`AuthContext::require_any_scope`) is
 // exercised against the SAME constants the handlers require.
-// ---------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 
 #[cfg(test)]
 mod scope_matrix {
