@@ -10,8 +10,6 @@
 //! `vertical enroll`; see `sentin8-service-self-registration-design.md` and
 //! `services/margin/DESIGN.md` §1 (container view) / §4 (workloads).
 
-use utoipa::OpenApi;
-
 use sentin8::registration::{
     AdminScope, AdminUi, AdminUiPage, ErrorCode, M2mGrant, PgRole, PolicySetDecl, Registration,
     RelationDecl, SqlMigration,
