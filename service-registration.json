@@ -6,7 +6,8 @@
       "telemetry_property": {
         "slug": "margin",
         "name": "Exchange8:Margin Telemetry"
-      }
+      },
+      "exposure": "internal"
     }
   ]
 }
